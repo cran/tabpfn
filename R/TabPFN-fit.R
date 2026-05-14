@@ -42,6 +42,12 @@
 #' that can be used to keep the training data within the limits of the
 #' data constraints imposed by the Python library.
 #'
+#' @param version A character string for the model version (e.g., `"v2"`,
+#' `"v2.5"`). When `NULL` (the default), the Python library's current default
+#' version is used. When set, the model is initialized via
+#' `create_default_for_version()` with the corresponding `ModelVersion` enum
+#' value.
+#'
 #' @param control A list of options produced by [control_tab_pfn()].
 #'
 #' @param ... Not currently used, but required for extensibility.
@@ -64,28 +70,28 @@
 #'
 #' ## License Requirements
 #'
-#' On November 6, 2025, PriorLabs released version 2.5 of the model, which
-#' contained several improvements. One other change is that accessing the model
-#' parameters required an API key. Without one, an error occurs:
+#' Starting with version 2.5, using TabPFN requires accepting the model license
+#' and obtaining a token from PriorLabs. Each model version (v2.5, v2.6, etc.)
+#' has its own license that must be accepted individually.
 #'
-#' "This model is gated and requires you to accept its terms.  Please
-#' follow these steps: 1. Visit [https://huggingface.co/Prior-Labs/tabpfn_2_5](https://huggingface.co/Prior-Labs/tabpfn_2_5)
-#' in your browser and accept the terms of use. 2. Log in to your Hugging Face
-#' account via the command line by running: hf auth login (Alternatively, you
-#' can set the HF_TOKEN environment variable with a read token)."
+#' To set up access:
 #'
-#' The license contains provisions for "Non-Commercial Use Only" usage if that
-#' is relevant for you.
-#'
-#' To get an API key, use the `huggingface` link above, create an account, and
-#' then get an API key. Once you have that, put it in your `.Renviron` file in
-#' the form of:
+#' 1. Visit [https://ux.priorlabs.ai](https://ux.priorlabs.ai) and create an
+#'    account.
+#' 2. Go to the **License** tab and accept the license for each model version
+#'    you intend to use.
+#' 3. Obtain your token from your account page.
+#' 4. Set the `TABPFN_TOKEN` environment variable. The easiest way is to add it
+#'    to your `.Renviron` file:
 #'
 #' \preformatted{
-#' HF_TOKEN=your_api_key_value
+#' TABPFN_TOKEN=your_token_value
 #' }
 #'
 #' The \pkg{usethis} function `edit_r_environ()` can be very helpful here.
+#'
+#' Users who already have `TABPFN_TOKEN` set can use TabPFN v2 without any
+#' additional steps.
 #'
 #' ## Python Installation
 #'
@@ -179,6 +185,37 @@
 #' Predictors do not require preprocessing; missing values and factor vectors
 #' are allowed.
 #'
+#' ## Model Selection
+#'
+#' By default, TabPFN uses the Python library's current default model version.
+#' There are two ways to override this.
+#'
+#' ### Selecting a model version
+#'
+#' Use the `version` argument to select a specific released model version. For
+#' example:
+#'
+#' \preformatted{
+#'   # Use version 2.0
+#'   mod <- tab_pfn(predictors, outcome, version = "v2")
+#'
+#'   # Use version 2.5
+#'   mod <- tab_pfn(predictors, outcome, version = "v2.5")
+#' }
+#'
+#' ### Pointing to a local model file
+#'
+#' If you have a model file on disk (e.g., downloaded for offline use), pass
+#' its path via `control_tab_pfn(model_path = ...)`:
+#'
+#' \preformatted{
+#'   ctrl <- control_tab_pfn(model_path = "/path/to/model_file.ckpt")
+#'   mod  <- tab_pfn(predictors, outcome, control = ctrl)
+#' }
+#'
+#' Note that `version` and `model_path` are mutually exclusive: if `version`
+#' is set, it overwrites any `model_path` supplied through `control`.
+#'
 #' ## Calculations
 #'
 #' For the `softmax_temperature` value, the softmax terms are:
@@ -264,6 +301,7 @@ tab_pfn.data.frame <- function(
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 ) {
@@ -282,7 +320,7 @@ tab_pfn.data.frame <- function(
     processed$outcomes <- processed$outcomes[tr_ind, , drop = FALSE]
   }
 
-  tab_pfn_bridge(processed, options, ...)
+  tab_pfn_bridge(processed, options, version = version, ...)
 }
 
 # XY method - matrix
@@ -297,6 +335,7 @@ tab_pfn.matrix <- function(
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 ) {
@@ -315,7 +354,7 @@ tab_pfn.matrix <- function(
     processed$outcomes <- processed$outcomes[tr_ind, , drop = FALSE]
   }
 
-  tab_pfn_bridge(processed, options, ...)
+  tab_pfn_bridge(processed, options, version = version, ...)
 }
 
 # Formula method
@@ -330,6 +369,7 @@ tab_pfn.formula <- function(
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 ) {
@@ -355,7 +395,7 @@ tab_pfn.formula <- function(
     processed$outcomes <- processed$outcomes[tr_ind, , drop = FALSE]
   }
 
-  tab_pfn_bridge(processed, options, ...)
+  tab_pfn_bridge(processed, options, version = version, ...)
 }
 
 # Recipe method
@@ -370,6 +410,7 @@ tab_pfn.recipe <- function(
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 ) {
@@ -388,21 +429,25 @@ tab_pfn.recipe <- function(
     processed$outcomes <- processed$outcomes[tr_ind, , drop = FALSE]
   }
 
-  tab_pfn_bridge(processed, options, ...)
+  tab_pfn_bridge(processed, options, version = version, ...)
 }
 
 # ------------------------------------------------------------------------------
 # Bridge
 
-tab_pfn_bridge <- function(processed, options, ...) {
+tab_pfn_bridge <- function(processed, options, version = NULL, ...) {
   rlang::check_dots_empty()
+
+  if (!is.null(version)) {
+    check_model_version(version)
+  }
 
   predictors <- processed$predictors
   outcome <- processed$outcomes[[1]]
 
   check_data_constraints(predictors, outcome, options)
 
-  res <- tab_pfn_impl(predictors, outcome, options)
+  res <- tab_pfn_impl(predictors, outcome, options, version = version)
 
   new_tab_pfn(
     fit = res$fit,
@@ -416,8 +461,20 @@ tab_pfn_bridge <- function(processed, options, ...) {
 # ------------------------------------------------------------------------------
 # Implementation
 
-tab_pfn_impl <- function(x, y, opts) {
-  tabpfn <- reticulate::import("tabpfn")
+tab_pfn_impl <- function(x, y, opts, version = NULL) {
+  tabpfn <- import_tabpfn()
+
+  if (!is.null(version)) {
+    if (is.factor(y)) {
+      default_model <- tabpfn$TabPFNClassifier
+    } else {
+      default_model <- tabpfn$TabPFNRegressor
+    }
+    opts$model_path <- default_model$create_default_for_version(
+      version
+    )$model_path
+  }
+
   cls_wrapper <- function(...) {
     tabpfn$TabPFNClassifier(...)
   }
@@ -505,29 +562,8 @@ check_fit_args <- function(opts, call = rlang::caller_env()) {
   # There have been some argument name differences in the python package versions
 
   arg_names <- names(opts)
-  py_lib <- try(reticulate::import("tabpfn"), silent = TRUE)
-  if (inherits(py_lib, "try-error")) {
-    cli::cli_alert_danger(
-      "The {.code tabpfn} Python library could not be imported."
-    )
-    url <- "https://rstudio.github.io/reticulate/articles/versions.html#order-of-discovery"
-    cli::cli_inform("See {.url {url}} for more information.")
-    cli::cli_bullets(
-      c(
-        i = "Environmental variables:",
-        i = "{.code RETICULATE_PYTHON}: {show_env_var('RETICULATE_PYTHON')}",
-        i = "{.code RETICULATE_PYTHON_ENV}: {show_env_var('RETICULATE_PYTHON_ENV')}",
-        i = "{.code RETICULATE_USE_MANAGED_VENV}: {show_env_var('RETICULATE_USE_MANAGED_VENV')}",
-        i = "{.code VIRTUAL_ENV}: {show_env_var('VIRTUAL_ENV')}"
-      )
-    )
-    cli::cli_abort(
-      "The {.code tabpfn} Python library could not be imported.",
-      call = NULL
-    )
-  }
-
-  py_arg_names <- names(formals(py_lib$TabPFNClassifier))
+  tabpfn <- import_tabpfn()
+  py_arg_names <- names(formals(tabpfn$TabPFNClassifier))
   if (any(py_arg_names == "n_jobs")) {
     names(opts) <- gsub("^n_preprocessing_jobs$", "n_jobs", names(opts))
   }

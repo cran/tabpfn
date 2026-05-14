@@ -25,3 +25,35 @@ test_that('control values', {
   set.seed(822)
   expect_snapshot(control_tab_pfn(random_state = 1))
 })
+
+test_that('control dot args - model_path', {
+  skip_if_no_tabpfn()
+  skip_if_not_installed("modeldata")
+
+  tabpfn <- import_tabpfn()
+  model_path <- tabpfn$TabPFNClassifier$create_default_for_version(
+    "v2.6"
+  )$model_path
+
+  data(two_class_dat, package = "modeldata")
+  x_tr <- two_class_dat[1:20, 1:2]
+  y_tr <- two_class_dat$Class[1:20]
+
+  set.seed(1)
+  mod <- tab_pfn(x_tr, y_tr, control = control_tab_pfn(model_path = model_path))
+
+  expect_s3_class(mod, exp_cls)
+})
+
+test_that('control dot args - invalid parameter fails', {
+  skip_if_no_tabpfn()
+  skip_if_not_installed("modeldata")
+
+  data(two_class_dat, package = "modeldata")
+  x_tr <- two_class_dat[1:20, 1:2]
+  y_tr <- two_class_dat$Class[1:20]
+
+  expect_error(
+    tab_pfn(x_tr, y_tr, control = control_tab_pfn(not_a_real_param = TRUE))
+  )
+})

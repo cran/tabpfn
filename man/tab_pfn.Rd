@@ -21,6 +21,7 @@ tab_pfn(x, ...)
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 )
@@ -33,6 +34,7 @@ tab_pfn(x, ...)
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 )
@@ -45,6 +47,7 @@ tab_pfn(x, ...)
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 )
@@ -57,6 +60,7 @@ tab_pfn(x, ...)
   balance_probabilities = FALSE,
   average_before_softmax = FALSE,
   training_set_limit = 10000,
+  version = NULL,
   control = control_tab_pfn(),
   ...
 )
@@ -96,6 +100,12 @@ function or after? Default is \code{FALSE}.}
 \item{training_set_limit}{An integer greater than 2L (and possibly \code{Inf})
 that can be used to keep the training data within the limits of the
 data constraints imposed by the Python library.}
+
+\item{version}{A character string for the model version (e.g., \code{"v2"},
+\code{"v2.5"}). When \code{NULL} (the default), the Python library's current default
+version is used. When set, the model is initialized via
+\code{create_default_for_version()} with the corresponding \code{ModelVersion} enum
+value.}
 
 \item{control}{A list of options produced by \code{\link[=control_tab_pfn]{control_tab_pfn()}}.}
 
@@ -141,28 +151,29 @@ specific computations and might be slower than the CPU for some data sets.
 
 \subsection{License Requirements}{
 
-On November 6, 2025, PriorLabs released version 2.5 of the model, which
-contained several improvements. One other change is that accessing the model
-parameters required an API key. Without one, an error occurs:
+Starting with version 2.5, using TabPFN requires accepting the model license
+and obtaining a token from PriorLabs. Each model version (v2.5, v2.6, etc.)
+has its own license that must be accepted individually.
 
-"This model is gated and requires you to accept its terms.  Please
-follow these steps: 1. Visit \url{https://huggingface.co/Prior-Labs/tabpfn_2_5}
-in your browser and accept the terms of use. 2. Log in to your Hugging Face
-account via the command line by running: hf auth login (Alternatively, you
-can set the HF_TOKEN environment variable with a read token)."
-
-The license contains provisions for "Non-Commercial Use Only" usage if that
-is relevant for you.
-
-To get an API key, use the \code{huggingface} link above, create an account, and
-then get an API key. Once you have that, put it in your \code{.Renviron} file in
-the form of:
+To set up access:
+\enumerate{
+\item Visit \url{https://ux.priorlabs.ai} and create an
+account.
+\item Go to the \strong{License} tab and accept the license for each model version
+you intend to use.
+\item Obtain your token from your account page.
+\item Set the \code{TABPFN_TOKEN} environment variable. The easiest way is to add it
+to your \code{.Renviron} file:
+}
 
 \preformatted{
-HF_TOKEN=your_api_key_value
+TABPFN_TOKEN=your_token_value
 }
 
 The \pkg{usethis} function \code{edit_r_environ()} can be very helpful here.
+
+Users who already have \code{TABPFN_TOKEN} set can use TabPFN v2 without any
+additional steps.
 }
 
 \subsection{Python Installation}{
@@ -259,6 +270,40 @@ predictors (2,000). There is an unchangeable limit to the number of classes
 
 Predictors do not require preprocessing; missing values and factor vectors
 are allowed.
+}
+
+\subsection{Model Selection}{
+
+By default, TabPFN uses the Python library's current default model version.
+There are two ways to override this.
+\subsection{Selecting a model version}{
+
+Use the \code{version} argument to select a specific released model version. For
+example:
+
+\preformatted{
+  # Use version 2.0
+  mod <- tab_pfn(predictors, outcome, version = "v2")
+
+  # Use version 2.5
+  mod <- tab_pfn(predictors, outcome, version = "v2.5")
+}
+}
+
+\subsection{Pointing to a local model file}{
+
+If you have a model file on disk (e.g., downloaded for offline use), pass
+its path via \code{control_tab_pfn(model_path = ...)}:
+
+\preformatted{
+  ctrl <- control_tab_pfn(model_path = "/path/to/model_file.ckpt")
+  mod  <- tab_pfn(predictors, outcome, control = ctrl)
+}
+
+Note that \code{version} and \code{model_path} are mutually exclusive: if \code{version}
+is set, it overwrites any \code{model_path} supplied through \code{control}.
+}
+
 }
 
 \subsection{Calculations}{
