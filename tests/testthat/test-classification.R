@@ -1,6 +1,8 @@
 test_that('classification models', {
   skip_if_no_tabpfn()
   skip_if_not_installed("modeldata")
+  # Force CPU so the printed device is deterministic across hardware.
+  local_tabpfn_cpu()
 
   #-----------------------------------------------------------------------------
 
@@ -28,6 +30,14 @@ test_that('classification models', {
 
   pred_df <- predict(mod_df, x_te_df)
   expect_equal(pred_df[0, ], pred_ptype)
+  expect_equal(nrow(pred_df), 3L)
+
+  pred_cls_df <- predict(mod_df, x_te_df, type = "class")
+  expect_equal(pred_cls_df[0, ], pred_ptype[, ".pred_class"])
+  expect_equal(nrow(pred_cls_df), 3L)
+
+  pred_df <- predict(mod_df, x_te_df, type = "prob")
+  expect_equal(pred_df[0, ], pred_ptype[, 1:2])
   expect_equal(nrow(pred_df), 3L)
 
   aug_df <- augment(mod_df, x_te_df)
@@ -66,12 +76,17 @@ test_that('classification models', {
   expect_s3_class(aug_mat, c("tbl_df", "tbl", "data.frame"))
   expect_equal(nrow(aug_mat), 3L)
   expect_equal(ncol(aug_mat), 5L)
+
+  expect_snapshot(predict(mod_mat, x_te_mat, quantile_levels = 0.5), error = TRUE)
+  expect_snapshot(predict(mod_mat, x_te_mat, type = "quantile"), error = TRUE)
 })
 
 test_that('classification models - recipes', {
   skip_if_no_tabpfn()
   skip_if_not_installed("modeldata")
   skip_if_not_installed("recipes")
+  # Force CPU so the printed device is deterministic across hardware.
+  local_tabpfn_cpu()
 
   reticulate::import("torch")
 

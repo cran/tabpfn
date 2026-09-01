@@ -123,6 +123,10 @@ A \code{tab_pfn} object with elements:
 \item \code{fit}: the python object containing the model.
 \item \code{levels}: a character string of class levels (or NULL for regression)
 \item \code{training}: a vector with the training set dimensions.
+\item \code{version}: the underlying TabPFN model version (or \code{"unknown"} if it
+cannot be determined).
+\item \code{device}: the device(s) the model was fitted on, e.g. \code{"cpu"}, \code{"mps"},
+or \code{"cuda:0"} (or \code{"unknown"} if it cannot be determined).
 \item \code{logging}: any R or python messages produced by the computations.
 \item \code{blueprint}: am object produced by \code{\link[hardhat:mold]{hardhat::mold()}} used to process
 new data during prediction.
@@ -157,7 +161,7 @@ has its own license that must be accepted individually.
 
 To set up access:
 \enumerate{
-\item Visit \url{https://ux.priorlabs.ai} and create an
+\item Visit \url{https://platform.priorlabs.ai:443/} and create an
 account.
 \item Go to the \strong{License} tab and accept the license for each model version
 you intend to use.
@@ -224,34 +228,26 @@ See the documentation for \code{\link[reticulate:py_require]{reticulate::py_requ
 method.
 }
 
-\subsection{Manually created \code{venv} Virtual Environment}{
+\subsection{Persistent Environment with \code{install_tabpfn()}}{
 
-Alternatively, you can use the functions in the \pkg{reticulate} package to
-create a virtual environment and install the required Python packages there.
-An example pattern is:
-
-\preformatted{
-  library(reticulate)
-
-  venv_name <- "r-tabpfn"    # exact name can be different
-  venv_seed_python <-
-    virtualenv_starter(">=3.11,<3.14") %||% install_python()
-
-  virtualenv_create(
-    envname = venv_name,
-    python = venv_seed_python,
-    packages = c("numpy", "tabpfn")
-  )
-}
-
-Once you have that virtual environment installed, you can declare it as your
-preferred Python installation with \code{use_virtualenv()}. (You must do this
-before reticulate has initialized Python, i.e., before attempting to use
-\pkg{tabpfn}):
+Alternatively, \code{\link[=install_tabpfn]{install_tabpfn()}} creates a persistent virtual environment
+named \code{"r-tabpfn"} and installs the Python \code{tabpfn} library into it:
 
 \preformatted{
-  reticulate::use_virtualenv("r-tabpfn")
+  library(tabpfn)
+
+  # Install the latest release
+  install_tabpfn()
+
+  # Or pin a specific version for reproducibility
+  install_tabpfn(version = "2.0.9")
 }
+
+You do not need to call \code{use_virtualenv()} afterwards: because this package
+imports the Python module \code{"tabpfn"}, \pkg{reticulate} automatically
+discovers and prefers the \code{"r-tabpfn"} environment over the ephemeral one.
+Run \code{install_tabpfn()} before \pkg{tabpfn} has initialized Python (i.e.,
+before fitting a model); if Python is already loaded, restart R first.
 }
 
 }

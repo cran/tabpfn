@@ -10,6 +10,34 @@ msg_tabpfn_not_available <- function(cnd) {
   )
 }
 
+# Is reticulate's resolved Python the canonical `"r-tabpfn"` environment? Used
+# by `.onLoad()` to decide whether to eagerly import `tabpfn` (see #34).
+uses_canonical_env <- function(envname = "r-tabpfn") {
+  exe <- tryCatch(reticulate::py_exe(), error = function(e) NULL)
+  if (is.null(exe) || !nzchar(exe)) {
+    return(FALSE)
+  }
+
+  norm <- function(p) {
+    if (is.null(p) || !nzchar(p)) {
+      return(NULL)
+    }
+    tryCatch(normalizePath(p, mustWork = FALSE), error = function(e) p)
+  }
+
+  exe <- norm(exe)
+
+  venv <- if (reticulate::virtualenv_exists(envname)) {
+    norm(reticulate::virtualenv_python(envname))
+  }
+  conda <- tryCatch(
+    norm(reticulate::conda_python(envname)),
+    error = function(e) NULL
+  )
+
+  identical(exe, venv) || identical(exe, conda)
+}
+
 check_libomp <- function() {
   os_info <- Sys.info()[["sysname"]]
   if (os_info != "Darwin") {
@@ -39,7 +67,7 @@ check_libomp <- function() {
         i = "We believe that an existing package has loaded {.pkg OpenMP}.",
         x = "{.pkg PyTorch} was about to do the same and would cause a segmentation fault.",
         i = "See {.url https://github.com/tidymodels/tabpfn/issues/3}.",
-        "!" = "Try running {.code reticulate::import('torch')} in a new R session prior to loading other packages.",
+        "!" = "In a new R session, run {.code tabpfn::tabpfn_initialize()} before loading {.pkg tabpfn} or any other package.",
         call = NULL
       )
     )
@@ -158,6 +186,28 @@ is_tab_pfn_installed <- function() {
       try(silent = TRUE)
   )
   !inherits(res, "try-error")
+}
+
+
+# Normalizes a user-supplied model version. Users may pass a bare number
+# (e.g. `2.5` or `"2.5"`); we prefix a `v` so it matches the `v`-prefixed
+# strings the Python library expects. The prefix is only added when the value
+# does not already start with `v`, and matching remains exact, so a bare `2.5`
+# will never match something like `v2.5-turbo` unless `v2.5` itself exists.
+normalize_model_version <- function(x) {
+  if (is.null(x)) {
+    return(x)
+  }
+
+  if (is.numeric(x)) {
+    x <- format(x, trim = TRUE)
+  }
+
+  if (is.character(x) && !grepl("^v", x)) {
+    x <- paste0("v", x)
+  }
+
+  x
 }
 
 

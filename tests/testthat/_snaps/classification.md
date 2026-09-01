@@ -3,56 +3,88 @@
     Code
       mod_df
     Message
-      TabPFN Classification Model
-    Output
       
-    Message
-      Training set
+      -- TabPFN-v3 Classification Model --
+      
+      Training set:
       i 20 data points
       i 2 predictors
       i class levels: "Class1" and "Class2"
+    Output
+      
+    Message
+      Device:
+      i cpu
 
 ---
 
     Code
       mod_f
     Message
-      TabPFN Classification Model
-    Output
       
-    Message
-      Training set
+      -- TabPFN-v3 Classification Model --
+      
+      Training set:
       i 20 data points
       i 2 predictors
       i class levels: "Class1" and "Class2"
+    Output
+      
+    Message
+      Device:
+      i cpu
 
 ---
 
     Code
       mod_mat
     Message
-      TabPFN Classification Model
-    Output
       
-    Message
-      Training set
+      -- TabPFN-v3 Classification Model --
+      
+      Training set:
       i 20 data points
       i 2 predictors
       i class levels: "Class1" and "Class2"
+    Output
+      
+    Message
+      Device:
+      i cpu
+
+---
+
+    Code
+      predict(mod_mat, x_te_mat, quantile_levels = 0.5)
+    Condition
+      Error in `predict()`:
+      ! `quantile_levels` is only for regression models.
+
+---
+
+    Code
+      predict(mod_mat, x_te_mat, type = "quantile")
+    Condition
+      Error in `predict()`:
+      ! `type` must be one of "class" or "prob", not "quantile".
 
 # classification models - recipes
 
     Code
       mod_rec
     Message
-      TabPFN Classification Model
-    Output
       
-    Message
-      Training set
+      -- TabPFN-v3 Classification Model --
+      
+      Training set:
       i 20 data points
       i 3 predictors
       i class levels: "Class1" and "Class2"
+    Output
+      
+    Message
+      Device:
+      i cpu
 
 # main options
 

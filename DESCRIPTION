@@ -1,6 +1,6 @@
 Package: tabpfn
 Title: Prior-Data Fitted Network Foundational Model for Tabular Data
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(
     person("Max", "Kuhn", , "max@posit.co", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2402-136X")),
@@ -17,19 +17,19 @@ URL: https://tabpfn.tidymodels.org,
         https://github.com/tidymodels/tabpfn
 BugReports: https://github.com/tidymodels/tabpfn/issues
 Depends: R (>= 4.1.0)
-Imports: cli, dplyr, generics, hardhat, purrr, reticulate (>=
-        1.41.0.1), rlang (>= 1.1.0), tibble
-Suggests: covr, modeldata, recipes, spelling, testthat (>= 3.0.0),
-        withr
+Imports: cli, dplyr, generics, hardhat (>= 1.4.1), jsonlite, purrr,
+        reticulate (>= 1.41.0.1), rlang (>= 1.1.0), tibble
+Suggests: covr, ggplot2, MASS, modeldata, recipes, rstudioapi,
+        spelling, testthat (>= 3.0.0), withr
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-05-14 12:41:48 UTC; max
+Packaged: 2026-09-01 22:17:52 UTC; max
 Author: Max Kuhn [aut, cre] (ORCID: <https://orcid.org/0000-0003-2402-136X>),
   Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)
 Maintainer: Max Kuhn <max@posit.co>
 Repository: CRAN
-Date/Publication: 2026-05-14 13:00:02 UTC
+Date/Publication: 2026-09-01 22:50:02 UTC
